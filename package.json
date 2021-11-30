@@ -1,6 +1,6 @@
 {
     "name": "@egomobile/mongo-log",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "description": "Extension for js-log, that writes to Mongo databases.",
     "main": "lib/index.js",
     "engines": {
