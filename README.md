@@ -19,11 +19,11 @@ npm install --save @egomobile/mongo-log
 ```typescript
 import log, { useMongoLogger } from "@egomobile/mongo-log";
 
-// add middleware
-log.use(useMongoLogger());
-
 // run this, if you do not want to use console.log
 // log.reset();
+
+// add middleware
+log.use(useMongoLogger());
 
 log("foo"); // default: debug
 log.debug("foo"); // debug
