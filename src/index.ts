@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import type { LoggerMiddleware } from '@egomobile/log';
+import log, { LoggerMiddleware } from '@egomobile/log';
 import { MongoDatabase } from '@egomobile/mongo';
 import type { IMongoLogContext, IUseMongoLoggerOptions, MongoLogCollectionProvider, MongoLogDatabaseProvider, MongoLogDocumentFactory } from './types';
 
@@ -45,6 +45,7 @@ export const defaultMongoCollection = 'logs';
  * @returns {LoggerMiddleware} The new middleware.
  */
 export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | MongoLogDatabaseProvider | null | undefined): LoggerMiddleware {
+    // setup with defaults
     let collectionProvider: MongoLogCollectionProvider = () => defaultMongoCollection;
     let dbProvider: MongoLogDatabaseProvider = () => MongoDatabase.open();
     let createLogDocument: MongoLogDocumentFactory = ({ args, time, type }) => ({
@@ -57,6 +58,7 @@ export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | Mong
         } else if (typeof optionsOrDatabase === 'object') {
             const { collection, database, documentFactory } = optionsOrDatabase as IUseMongoLoggerOptions;
 
+            // database connection
             if (database) {
                 if (typeof database === 'function') {
                     dbProvider = database as MongoLogDatabaseProvider;
@@ -65,6 +67,7 @@ export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | Mong
                 }
             }
 
+            // name of collection
             if (collection) {
                 if (typeof collection === 'string') {
                     collectionProvider = () => collection as string;
@@ -75,6 +78,7 @@ export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | Mong
                 }
             }
 
+            // document factory
             if (documentFactory) {
                 if (typeof documentFactory === 'function') {
                     createLogDocument = documentFactory as MongoLogDocumentFactory;
@@ -100,12 +104,12 @@ export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | Mong
             // collect all data for the collection
             const connection = await Promise.resolve(dbProvider(context));
             const collectionName = await Promise.resolve(collectionProvider(context));
-            const document = await await Promise.resolve(createLogDocument(context));
+            const document = await Promise.resolve(createLogDocument(context));
 
             await connection.withClient(async (client, db) => {
                 const collection = db.collection(collectionName);
 
-                return collection.insertOne(document);
+                await collection.insertOne(document);
             });
         })();
     };
@@ -113,3 +117,7 @@ export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | Mong
 
 // also export anything from @egomobile/log
 export * from '@egomobile/log';
+
+// make default logger instance available as
+// default export
+export default log;
