@@ -16,6 +16,7 @@ npm install --save @egomobile/mongo-log
 
 The following modules are defined in [peerDependencies](https://nodejs.org/uk/blog/npm/peer-dependencies/) and have to be installed manually:
 
+- [@egomobile/log](https://github.com/egomobile/js-log)
 - [@egomobile/mongo](https://github.com/egomobile/node-mongo)
 
 ## Usage
