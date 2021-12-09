@@ -13,7 +13,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-import log, { LoggerMiddleware } from '@egomobile/log';
+import log, { AsyncLoggerMiddleware, LoggerMiddleware, LogType, NextFunction } from '@egomobile/log';
 import { MongoDatabase } from '@egomobile/mongo';
 import type { IMongoLogContext, IUseMongoLoggerOptions, MongoLogCollectionProvider, MongoLogDatabaseProvider, MongoLogDocumentFactory } from './types';
 
@@ -27,24 +27,32 @@ export const defaultMongoCollection = 'logs';
  *
  * @example
  * ```
- * import log, { useMongoLogger } from "@egomobile/mongo-log"
+ * import log, { consoleLogger as useConsoleLogger, useFallback, useMongoLogger } from "@egomobile/mongo-log"
  *
- * // add as additional middleware
- * log.use(useMongoLogger())
+ * // reset the logger to configure it from scratch
+ * log.reset()
  *
- * log("foo")  // default: debug
- * log.debug("foo")  // debug
- * log.error("foo")  // error
- * log.warn("foo")  // warning
- * log.info("foo")  // information
- * log.trace("foo")  // trace
+ * // use mongo logger as first middleware and console logger as a fallback
+ * log.use(
+ *   useFallback(
+ *     useMongoLogger(),
+ *     useConsoleLogger()
+ *   )
+ * )
+ *
+ * log("foo") // default: debug
+ * log.debug("foo") // debug
+ * log.error("foo") // error
+ * log.warn("foo") // warning
+ * log.info("foo") // information
+ * log.trace("foo") // trace
  * ```
  *
  * @param {IUseMongoLoggerOptions|MongoLogDatabaseProvider|null|undefined} [optionsOrDatabase] The custom options or the database to use.
  *
- * @returns {LoggerMiddleware} The new middleware.
+ * @returns {AsyncLoggerMiddleware|LoggerMiddleware} The new middleware.
  */
-export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | MongoLogDatabaseProvider | null | undefined): LoggerMiddleware {
+export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | MongoLogDatabaseProvider | null | undefined): AsyncLoggerMiddleware | LoggerMiddleware {
     // setup with defaults
     let collectionProvider: MongoLogCollectionProvider = () => defaultMongoCollection;
     let dbProvider: MongoLogDatabaseProvider = () => MongoDatabase.open();
@@ -91,16 +99,20 @@ export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | Mong
         }
     }
 
-    return (type, args) => {
+    return (type: LogType, args: any[], done?: NextFunction) => {
+        const time = new Date();
+
+        if (!done) {
+            done = () => { };
+        }
+
+        const context: IMongoLogContext = {
+            args,
+            time,
+            type
+        };
+
         (async () => {
-            const time = new Date();
-
-            const context: IMongoLogContext = {
-                args,
-                time,
-                type
-            };
-
             // collect all data for the collection
             const connection = await Promise.resolve(dbProvider(context));
             const collectionName = await Promise.resolve(collectionProvider(context));
@@ -111,7 +123,11 @@ export function useMongoLogger(optionsOrDatabase?: IUseMongoLoggerOptions | Mong
 
                 await collection.insertOne(document);
             });
-        })();
+        })().then(() => {
+            done!();
+        }).catch(error => {
+            done!(error);
+        });
     };
 }
 

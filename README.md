@@ -22,13 +22,17 @@ The following modules are defined in [peerDependencies](https://nodejs.org/uk/bl
 ## Usage
 
 ```typescript
-import log, { useMongoLogger } from "@egomobile/mongo-log";
+import log, {
+  consoleLogger as useConsoleLogger,
+  useFallback,
+  useMongoLogger,
+} from "@egomobile/mongo-log";
 
-// run this, if you do not want to use console.log
-// log.reset();
+// reset the logger to configure it from scratch
+log.reset();
 
-// add middleware
-log.use(useMongoLogger());
+// use mongo logger as first middleware and console logger as a fallback
+log.use(useFallback(useMongoLogger(), useConsoleLogger()));
 
 log("foo"); // default: debug
 log.debug("foo"); // debug
