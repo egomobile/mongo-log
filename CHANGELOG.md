@@ -1,5 +1,9 @@
 # Change Log (@egomobile/mongo-log)
 
+## 1.0.0
+
+- updated [@egomobile/mongo](https://github.com/egomobile/node-mongo) to 2.0.0 to support MongoDB 5
+
 ## 0.3.0
 
 - BREAKING CHANGE: [useMongoLogger](https://egomobile.github.io/mongo-log/modules.html#useMongoLogger) returns an [AsyncLoggerMiddleware](https://egomobile.github.io/js-log/modules.html#AsyncLoggerMiddleware) now, similar to [api-log](https://github.com/egomobile/api-log)
