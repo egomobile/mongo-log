@@ -4,7 +4,7 @@
     "description": "Extension for js-log, that writes to Mongo databases.",
     "main": "lib/index.js",
     "engines": {
-        "node": ">=12.0.0"
+        "node": ">=16.0.0"
     },
     "scripts": {
         "build": "del ./lib && tsc",
